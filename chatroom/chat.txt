@@ -1,0 +1,158 @@
+var insertQuestion = function(question){
+  var newQuestion = document.createElement('li');
+  newQuestion.innerHTML = question;
+
+  var questions = document.getElementsByTagName('ul')[0];
+  return questions.appendChild(newQuestion);
+}
+
+<script src="/socket.io/socket.io.js"></script>
+<script src="/insertQuestion.js"></script>
+
+<script>
+  var server = io.connect('http://localhost:8080');
+
+  // Insert code here
+  server.on('question', function(data){
+  	insertQuestion(data);
+  });        
+</script>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+/* 
+ * Edited by Moongazer
+ */
+var express = require('express');
+
+//initialize express app
+var app = express();
+
+var http = require('http');
+
+//create express server
+var server = http.createServer(app);
+
+var io = require('socket.io')(server);
+
+// a convenient method from .request().it sets the method to GET and calls req.end() automatically.
+app.get('/', function(req, res){
+//    console.log("hihi!");  //this would print out @server console
+    res.sendFile(__dirname + '/index.html');
+});
+
+
+//add a connection listener
+io.on('connection', function(client){
+    console.log("Client connected...");
+//    client.emit('messages', {hello: 'world'}); // s -> c
+    
+    client.on('join', function(name){
+        client.nickname = name;
+    });
+    // server listen to event from client
+    client.on('messages', function(message){
+        console.log(data); //print out the listened msg to server console
+        
+        var nickname = client.nickname;
+        
+//        io.emit("messages", nickname + ": " + message);
+        
+        //broadcast too all other clients
+        client.broadcast.emit("messages", nickname + ": " + message);
+        client.emit("messages", nickname + ": " + message);
+        
+    });
+    
+//    client.on("broadsuccess", function(data2){
+//        console.log(data2);
+//    });
+
+
+});
+
+
+server.listen(8080);
+
+
+
+
+
+
+
+<!DOCTYPE html>
+<!--
+Edited by Moongazer
+-->
+<html>
+    <head>
+        <meta charset="UTF-8">
+        <meta name="viewport" content="width=device-width, initial-scale=1.0">
+        <script src="socket.io/socket.io.js"></script>
+        <script src="http://ajax.googleapis.com/ajax/libs/jquery/1.11.1/jquery.min.js"></script>
+    </head>
+    <body>
+        <h3>Welcome to chatroom!</h3>
+        <p id="status"></p>
+        <div></div>
+        <form id="chat_form" action="">
+            <input type="text" id="chat_input" value="">
+            <input type="submit" value="send">
+        </form>
+        <script>
+            var server = io.connect('http://localhost:8080');
+            $("#chat_form").submit(function(e){
+               var message = $("#chat_input").val(); 
+               
+               //send msg to server
+               server.emit('messages', message);
+            });
+            server.on('messages', function(data){
+//                socket.emit('broadsuccess', "success");
+                insertMessage(data);
+            });
+            
+            //diff btw connect and connection event?
+            server.on("connect", function(data){
+                $("#status").html("Connected to chatter");
+                
+                // no need var?
+                nickname = prompt("What is your nickname?");
+                
+                server.emit('join', nickname);
+            });
+            
+            function insertMessage(data){
+                $("div").append("<p>" + data + "</p>");
+//                console.log(data);
+            }
+            
+            
+        </script>
+    </body>
+</html>

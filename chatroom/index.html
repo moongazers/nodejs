@@ -1,0 +1,159 @@
+<!DOCTYPE html>
+<!--
+Edited by Moongazer
+-->
+<html>
+    <head>
+        <meta charset="UTF-8">
+        <meta name="viewport" content="width=device-width, initial-scale=1.0">
+        <script src="socket.io/socket.io.js"></script>
+        <script src="http://ajax.googleapis.com/ajax/libs/jquery/1.11.1/jquery.min.js"></script>
+        <style>
+            h2 {
+                text-align: center;
+            }
+            
+            body, html { 
+                height: 95%;
+                width: 95%;
+            }
+            
+            body { 
+                font: 13px Monaco, Helvetica; 
+            }
+            
+            #name, #message{
+                margin: 0;
+                position: absolute;
+                /*float: left;*/
+                border: 2px solid grey;
+                display: inline-block;
+            }                     
+            
+            #name {
+                color: #009900;
+                font-size: 20px;
+                left: 10%;
+                width: 20%;
+                height: 86%;
+                background-color: #f0f0ff; 
+                padding: 0px 0px 0px 10px;
+            }
+            
+            #message {
+                left: 422px;
+                width: 50%;
+                height: 80%;
+                padding: 5px;
+                /*font-size: 15px;*/
+/*                z-index: -1;*/
+            }
+
+            #chat_form {
+                font: inherit;
+                position: relative;
+                /*margin: 0;*/
+                left: 34%;
+                bottom: -89%;
+            }
+            
+            #chat_input {
+                font: inherit;
+                position: relative;
+                width: 615px;
+                height: 33px;
+                left: -5px;
+                border: 2px solid grey;
+                padding-left: 5px;
+            }
+            
+            #chat_submit {
+                font: inherit;
+                font-size: 15px;
+                color: white;
+                background-color: #440;
+                border: 2px solid #440;
+                position: relative;
+                left: -14px;
+                height: 42px;
+                width: 75px;
+            }
+            
+            p {
+                font: inherit;
+            }
+            
+            span {
+                color: #666666;
+                font-size: 14px;
+            }
+            
+        </style>
+    </head>
+    <body>
+        <h2 id="status"></h2>
+        <div id="name"></div>
+        <div id="message"><ul></ul></div>
+        <form id="chat_form" action="">
+            <input type="text" id="chat_input" value="" placeholder="Type your message">
+            <input type="submit" id="chat_submit" value="send">
+        </form>
+        <script>
+            var server = io.connect('http://localhost:8080');
+//            var server = io();
+            
+            $("#chat_form").submit(function(e){
+               var message = $("#chat_input").val(); 
+               //send msg to server
+               server.emit('messages', message);
+               
+               $("#chat_input").val(""); //clear the msg
+               return false;  //do both preventDefault and stopPropagation, w/o page would refresh
+            });
+            
+            server.on("messages", function(message){
+               insertMessage(message); 
+            });
+            
+            //refer line 21
+            server.on("connect", function(data){
+                $("#status").html("Welcome to ChatRoom!");
+                var nickname = prompt("What is your nickname?");
+                //TODO: check if there is duplicate name;
+                
+                server.emit("join", nickname);
+            });
+            
+            server.on("joined", function(notice){
+                insertMessage(notice);
+            });
+            
+            server.on("addName", function(name){
+                insertName(name);
+            });    
+            
+            server.on("delName", function(name){
+                delName(name);
+            });
+            
+            function insertMessage(data){
+                //TODO: scroll bar for too many msg
+                $("#message").append("<p>" + data + "</p>");
+//                console.log(data);
+            }
+            
+            function insertName(name){
+                //TODO: scroll bar for too many names
+                $("#name").append("<p>" + name + "</p>");
+            }
+            
+            function delName(name){
+                $("#name p").each(function(){
+                    if($(this).text() === name){
+                        $(this).remove();
+                    }
+                });
+            }
+        </script>
+    </body>
+</html>
